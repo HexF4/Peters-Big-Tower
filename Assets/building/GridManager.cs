@@ -14,6 +14,14 @@ public class GridManager : MonoBehaviour
             Destroy(gameObject);
     }
 
+    public Vector3Int SnapToGrid(Vector3 position)
+    {
+     int x = Mathf.RoundToInt(position.x);
+        int y = Mathf.RoundToInt(position.y);
+        int z = Mathf.RoundToInt(position.z);
+        return new Vector3Int(x, y, z);
+    }
+
     public bool IsOccupied(Vector3Int pos)
     {
         return placedBlocks.ContainsKey(pos);
