@@ -2,30 +2,38 @@ using UnityEngine;
 
 public class BlockPlacer : MonoBehaviour
 {
-    public GameObject blockPrefab;
-    public GameObject ghostBlock;
-    public LayerMask placementLayer;
-    public float maxDistance = 5f;
+    public GameObject ghostBlockPrefab;  // transparent preview block
+    public GameObject realBlockPrefab;   // solid block to place
+    public LayerMask placementMask;      // what the ray can hit
+    public float maxRayDistance = 10f;
+
+    private GameObject ghostBlock;
+
+    void Start()
+    {
+        ghostBlock = Instantiate(ghostBlockPrefab);
+    }
 
     void Update()
     {
-        Camera cam = Camera.main;
-        Ray ray = new Ray(cam.transform.position, cam.transform.forward);
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, maxDistance, placementLayer)) {
-            Vector3Int placePos = Vector3Int.RoundToInt(hit.point + hit.normal * 0.5f);
-            ghostBlock.transform.position = placePos;
+        if (Physics.Raycast(ray, out hit, maxRayDistance, placementMask))
+        {
+            Vector3 worldPos = hit.point + hit.normal * 0.5f;
+            Vector3Int gridPos = GridManager.Instance.SnapToGrid(worldPos);
 
-            if (Input.GetMouseButtonDown(0)) {
-                GridManager.Instance.PlaceBlock(placePos, blockPrefab);
-            }
+            ghostBlock.transform.position = gridPos;
 
-            if (Input.GetMouseButtonDown(1)) {
-                Vector3Int removePos = Vector3Int.RoundToInt(hit.point - hit.normal * 0.5f);
-                GridManager.Instance.RemoveBlock(removePos);
+            if (Input.GetMouseButtonDown(0) && !GridManager.Instance.IsOccupied(gridPos))
+            {
+                GridManager.Instance.PlaceBlock(gridPos, realBlockPrefab);
             }
+        }
+        else
+        {
+            ghostBlock.transform.position = new Vector3(0, -100, 0);  // hide if nothing hit
         }
     }
 }
-
