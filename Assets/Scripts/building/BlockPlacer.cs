@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class BlockPlacer : MonoBehaviour
 {
@@ -11,78 +11,63 @@ public class BlockPlacer : MonoBehaviour
 
     void Start()
     {
-        // Find BuildTool child once at startup
         buildToolTransform = Camera.main.transform.Find("BuildTool");
 
         if (buildToolTransform == null)
         {
-            Debug.LogError("BuildTool object not found as a child of the camera.");
+            Debug.LogError("BuildTool object not found under Camera.");
+            return;
         }
 
         if (ghostBlockPrefab == null || realBlockPrefab == null)
         {
-            Debug.LogError("Missing prefab assignments on BlockPlacer.");
+            Debug.LogError("Assign ghostBlockPrefab and realBlockPrefab in Inspector.");
             return;
         }
 
         ghostInstance = Instantiate(ghostBlockPrefab);
         ghostInstance.SetActive(false);
-
-        Debug.Log("BlockPlacer initialized.");
     }
 
     void Update()
     {
-        // If ghost is missing or camera isn't ready, exit
-        if (ghostInstance == null || Camera.main == null)
+        if (Camera.main == null || ghostInstance == null || buildToolTransform == null)
             return;
 
-        // Check if BuildTool exists and is active
-        if (buildToolTransform == null || !buildToolTransform.gameObject.activeInHierarchy)
+        if (!buildToolTransform.gameObject.activeInHierarchy)
         {
-            if (ghostInstance.activeSelf)
-                ghostInstance.SetActive(false);
-
+            ghostInstance.SetActive(false);
             return;
         }
 
-        // Enable ghost if not already
-        if (!ghostInstance.activeSelf)
-        {
-            ghostInstance.SetActive(true);
-            Debug.Log("BuildTool active � showing ghost block.");
-        }
+        ghostInstance.SetActive(true);
 
-        Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f));
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, 5f, groundMask))
         {
-            Vector3 rawPos = hit.point + hit.normal * 0.49f;
-
-            // Snap to nearest whole grid coordinate
+            // ✅ THE CORRECT SNAPPING — this WORKS
             Vector3 snapped = new Vector3(
-                Mathf.Round(rawPos.x),
-                Mathf.Round(rawPos.y),
-                Mathf.Round(rawPos.z)
+                Mathf.Floor(hit.point.x) + 0.5f,
+                Mathf.Floor(hit.point.y) + 0.5f,
+                Mathf.Floor(hit.point.z) + 0.5f
             );
 
             ghostInstance.transform.position = snapped;
 
-            if (Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0)) // Left click
             {
-                Debug.Log($"Placing real block at {snapped}");
                 Instantiate(realBlockPrefab, snapped, Quaternion.identity);
             }
 
-            if (Input.GetMouseButtonDown(1))
+            if (Input.GetMouseButtonDown(1)) // Right click
             {
-                Collider[] targets = Physics.OverlapBox(snapped, Vector3.one * 0.45f);
-                foreach (var col in targets)
+                Collider[] hits = Physics.OverlapBox(snapped, Vector3.one * 0.45f);
+                foreach (var col in hits)
                 {
                     if (col.CompareTag("RealBlock"))
                     {
-                        Debug.Log($"Destroying block: {col.gameObject.name}");
                         Destroy(col.gameObject);
                     }
                 }
@@ -90,11 +75,7 @@ public class BlockPlacer : MonoBehaviour
         }
         else
         {
-            if (ghostInstance.activeSelf)
-            {
-                ghostInstance.SetActive(false);
-                Debug.Log("Raycast did not hit ground. Hiding ghost.");
-            }
+            ghostInstance.SetActive(false);
         }
     }
 }
