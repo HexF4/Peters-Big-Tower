@@ -9,7 +9,15 @@ public class MenuToggle : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E))
         {
             if (menu != null)
-                menu.SetActive(!menu.activeSelf);
+            {
+                // Toggle once
+                bool isOpen = !menu.activeSelf;
+                menu.SetActive(isOpen);
+
+                // Handle cursor
+                Cursor.visible = isOpen;
+                Cursor.lockState = isOpen ? CursorLockMode.None : CursorLockMode.Locked;
+            }
         }
     }
 }
