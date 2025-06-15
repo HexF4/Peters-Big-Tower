@@ -1,0 +1,9 @@
+fill shop with different materials for building metal wood etc.
+
+turrets/towers 
+
+enemy's 
+
+enemy pathing for a core block (could chain off the building grid)
+
+block selector (prob could use the shop for this too)   
